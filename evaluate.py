@@ -34,7 +34,6 @@ def generate_summaries_or_translations(
     fp16=False,
     task="summarization",
     prefix=None,
-    datastore_dir = None,
     **generate_kwargs,
 ) -> Dict:
     """Save model.generate results to <out_file>, and return how long it took."""
@@ -46,13 +45,9 @@ def generate_summaries_or_translations(
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     logger.info(f"Inferred tokenizer type: {tokenizer.__class__}")  # if this is wrong, check config.model_type.
-    if datastore_dir:
-        datastore = DataStore()
-        datastore.set_vocab_size(vocab_size=tokenizer.vocab_size)
-        datastore.load(saved_dir=datastore_dir)
-    else:
-        datastore=None
-    logger.info("Loaded datastore from {}".format(datastore_dir))
+    if generate_kwargs.get("datastore") is not None:
+        generate_kwargs.get("datastore").set_vocab_size(vocab_size=tokenizer.vocab_size)
+
     start_time = time.time()
     # update config with task specific params
     use_task_specific_params(model, task)
@@ -64,7 +59,6 @@ def generate_summaries_or_translations(
         summaries = model.generate(
             input_ids=batch.input_ids,
             attention_mask=batch.attention_mask,
-            datastore=datastore,
             **generate_kwargs,
         )
         dec = tokenizer.batch_decode(summaries, skip_special_tokens=True, clean_up_tokenization_spaces=False)
@@ -102,6 +96,8 @@ def run_generate(verbose=True):
     parser.add_argument("input_path", type=str, help="like cnn_dm/test.source")
     parser.add_argument("save_path", type=str, help="where to save summaries")
     parser.add_argument("--datastore_path", type=str, help="where to load the trained index for datstore")
+    parser.add_argument("--lambda_value", type = float, help = "the interpolation factor for combining the knn score and the model generation score")
+    parser.add_argument("--k", type = int, help = "the k value for knn search")
     parser.add_argument("--reference_path", type=str, required=False, help="like cnn_dm/test.target")
     parser.add_argument("--score_path", type=str, required=False, default="metrics.json", help="where to save metrics")
     parser.add_argument("--device", type=str, required=False, default=DEFAULT_DEVICE, help="cuda, cuda:1, cpu etc.")
@@ -125,7 +121,6 @@ def run_generate(verbose=True):
             " lang=en-ru. If no value is passed, the current datetime string will be used."
         ),
     )
-    print("You are here!")
     # Unspecified args like --num_beams=2 --decoder_start_token_id=4 are passed to model.generate
     args, rest = parser.parse_known_args()
     parsed_args = parse_numeric_n_bool_cl_kwargs(rest)
@@ -142,7 +137,12 @@ def run_generate(verbose=True):
     if args.device == "cpu" and args.fp16:
         # this mix leads to RuntimeError: "threshold_cpu" not implemented for 'Half'
         raise ValueError("Can't mix --fp16 and --device cpu")
-
+    if args.datastore_path:
+        datastore = DataStore()
+        datastore.load(saved_dir=args.datastore_path)
+        logger.info(f"Loaded datastore from {args.datastore_path}")
+    else:
+        datastore=None
     runtime_metrics = generate_summaries_or_translations(
         examples,
         args.save_path,
@@ -152,7 +152,9 @@ def run_generate(verbose=True):
         fp16=args.fp16,
         task=args.task,
         prefix=args.prefix,
-        datastore = args.datastore_dir,
+        datastore = datastore,
+        k = args.k,
+        lambda_value = args.lambda_value,
         **parsed_args,
     )
 
