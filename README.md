@@ -21,7 +21,11 @@ cd transformers
 pip install -e .
 ```
 
+**Optional** (if you want to use the datastore that we trained):
 
+To use the data store that we trained, please download the trained index from [here](https://drive.google.com/file/d/1JuxQGigS4lhz5lEwJA-dEpWfjVAyEzn2/view?usp=share_link). 
+
+After downloading, move it to `./datastore_1/`, so this directory have a `token_ids.pt` and a `index.trained`
 
 ## 1. Extract raw features 
 Before building the datastore, we need to extract all features in the form of (hidden_state<sub>i</sub>, word<sub>i+1</sub>). 
