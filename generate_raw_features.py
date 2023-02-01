@@ -239,7 +239,6 @@ def main():
         range(len(train_dataset) // total_batch_size),
         disable=not accelerator.is_local_main_process,
     )
-    starting_epoch = 0
 
     def helper_print(name, tensor):
         # a function to help with debugging
