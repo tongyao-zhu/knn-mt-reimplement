@@ -11,19 +11,27 @@ If you want to start from scratch and experience the every step, you should star
 
 ## Prerequisites
 Please create a suitable python environment (using venv or conda). 
-Inside the environment, run _pip install -r requirements.txt_ to install the dependencies.
+Inside the environment, run `pip install -r requirements.txt` to install the dependencies.
+
+As we modified the transformers library, please install the library by:
+
+> cd transformers
+> 
+> pip install -e .
+
+
 
 ## 1. Extract raw features 
 Before building the datastore, we need to extract all features in the form of (hidden_state<sub>i</sub>, word<sub>i+1</sub>) 
 We do so by the following: 
-`python generate_raw_features.py   
---model_name_or_path facebook/wmt19-de-en   \n
---source_lang de  \n
---target_lang en   \n
---dataset_name wmt19 
---dataset_config_name de-en 
---save_path saved_gen
---percentage=10`
+>python generate_raw_features.py   
+>--model_name_or_path facebook/wmt19-de-en   \n
+>--source_lang de  \n
+>--target_lang en   \n
+>--dataset_name wmt19 
+>--dataset_config_name de-en 
+>--save_path saved_gen
+>--percentage=10`
 
 The --save_path specifies where to save the generated features. Please make sure there is enough disk space.
 The percentage specifies how many percent of the training data will be loaded and passed through the model. To save time and space for local testing, it is best to use a very small number (e.g. 1) first. 
@@ -42,14 +50,25 @@ This is the key step of the k-NN MT pipeline. As we are using the huggingface tr
 We modified some part of the library about beam search. 
 
 To run the inference and evaluation on the validation dataset, do: 
-
-
+`
+python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt --reference_path $DATA_DIR/val.target --score_path $SAVE_DIR/test_bleu.json --bs $BS --task translation --num_beams $NUM_BEAMS --datastore_path ~/knn-mt/datastore_1 --lambda_value 0.8 --k 64
+`
 The datastore_path parameter should be the datastore path you saved during Step 2. 
 The lambda_value parameter determines how much you want to interpolate between the generated score (lambda) and the knn_score (1-lambda). 
 The final score for each token is:
 
-final_score = lambda * score<sub>gen</sub> + (1-lambda) * score<sub>kNN</sub>
+>final_score = lambda * score<sub>gen</sub> + (1-lambda) * score<sub>kNN</sub>
 
 
 Please note that you might not see a big difference between the BLEU scores for different lambda values. This is because we only train the datastore on a very small fraction of the training data (1%), due to computation resources constraint. 
 It is too small for any improvement to happen. However, if you have enough resources, you should be able to see the improvement. 
+
+
+For the baseline without kNN search, remove the _datastore_path_, _k_, and _lambda_value_. You will get: 
+
+`
+python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt --reference_path $DATA_DIR/val.target --score_path $SAVE_DIR/test_bleu.json --bs $BS --task translation --num_beams $NUM_BEAMS
+`
+
+The baseline result should be:
+{'bleu': 41.3159, 'n_obs': 2000, 'runtime': 143, 'seconds_per_sample': 0.0715}
