@@ -16,9 +16,10 @@ Inside the environment, run `pip install -r requirements.txt` to install the dep
 
 As we modified the transformers library, please install the library by:
 
-> cd transformers
-> 
-> pip install -e .
+```
+cd transformers
+pip install -e .
+```
 
 
 
