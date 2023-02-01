@@ -33,13 +33,13 @@ We do so by the following:
 
 ```
 python generate_raw_features.py   \
-    --model_name_or_path facebook/wmt19-de-en  \ 
+    --model_name_or_path facebook/wmt19-de-en  \
     --source_lang de   \
     --target_lang en    \
     --dataset_name wmt19  \
-    --dataset_config_name de-en  \ 
+    --dataset_config_name de-en  \
     --save_path saved_gen \
-    --percentage=10 
+    --percentage=1
 ```
 
 The `--save_path` specifies where to save the generated features. Please make sure there is enough disk space.
