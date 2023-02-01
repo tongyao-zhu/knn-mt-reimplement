@@ -99,6 +99,7 @@ The final score for each token is:
 Please note that you might not see a big difference between the BLEU scores for different lambda values. This is because we only train the datastore on a very small fraction of the training data (1%), due to computation resources constraint. 
 It is too small for any improvement to happen. However, if you have enough resources, you should be able to see the improvement. 
 
+For k==64, lambda_value==0.8, you should get: {'bleu': 40.9568, 'n_obs': 2000, 'runtime': 5892, 'seconds_per_sample': 2.946}
 
 For the baseline without kNN search, remove the _datastore_path_, _k_, and _lambda_value_. You will get: 
 
