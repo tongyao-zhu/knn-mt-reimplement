@@ -1,0 +1,9 @@
+datasets
+accelerate
+sacremoses
+sacrebleu
+torch
+nltk
+faiss-gpu
+tqdm
+numpy
