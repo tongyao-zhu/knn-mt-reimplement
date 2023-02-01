@@ -60,11 +60,17 @@ We modified some part of the library about beam search.
 
 To run the inference and evaluation on the validation dataset, do: 
 
-`
-python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt --reference_path $DATA_DIR/val.target --score_path $SAVE_DIR/test_bleu.json --bs $BS --task translation --num_beams $NUM_BEAMS --datastore_path ~/knn-mt/datastore_1 --lambda_value 0.8 --k 64
-`
+```
+export PAIR=de-en
+export DATA_DIR=data/$PAIR
+export SAVE_DIR=data/$PAIR
+export BS=8
+export NUM_BEAMS=15
 
-The `--datastore_path` parameter should be the datastore path you saved during Step 2. 
+python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt --reference_path $DATA_DIR/val.target --score_path $SAVE_DIR/test_bleu.json --bs $BS --task translation --num_beams $NUM_BEAMS --datastore_path ~/knn-mt/datastore_1 --lambda_value 0.8 --k 64
+```
+
+The `--datastore_path` parameter should be the datastore path you saved during Step 2, or it can be a pretrained index (in this repo, _datastore_1/_ contains the index.)
 
 The `--lambda_value` parameter determines how much you want to interpolate between the generated score (lambda) and the knn_score (1-lambda). 
 
