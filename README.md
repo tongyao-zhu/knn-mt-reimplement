@@ -27,14 +27,16 @@ pip install -e .
 Before building the datastore, we need to extract all features in the form of (hidden_state<sub>i</sub>, word<sub>i+1</sub>). 
 We do so by the following: 
 
-`python generate_raw_features.py   
---model_name_or_path facebook/wmt19-de-en   
---source_lang de  
---target_lang en   
---dataset_name wmt19 
---dataset_config_name de-en 
---save_path saved_gen
---percentage=10`
+```
+python generate_raw_features.py   \
+    --model_name_or_path facebook/wmt19-de-en  \ 
+    --source_lang de   \
+    --target_lang en    \
+    --dataset_name wmt19  \
+    --dataset_config_name de-en  \ 
+    --save_path saved_gen \
+    --percentage=10 
+```
 
 The `--save_path` specifies where to save the generated features. Please make sure there is enough disk space.
 
@@ -68,7 +70,15 @@ export SAVE_DIR=data/$PAIR
 export BS=8
 export NUM_BEAMS=15
 
-python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt --reference_path $DATA_DIR/val.target --score_path $SAVE_DIR/test_bleu.json --bs $BS --task translation --num_beams $NUM_BEAMS --datastore_path ~/knn-mt/datastore_1 --lambda_value 0.8 --k 64
+python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt \
+    --reference_path $DATA_DIR/val.target \
+    --score_path $SAVE_DIR/test_bleu.json \
+    --bs $BS \
+    --task translation \
+    --num_beams $NUM_BEAMS \
+    --datastore_path datastore_1 \
+    --lambda_value 0.8 \
+    --k 64
 ```
 
 The `--datastore_path` parameter should be the datastore path you saved during Step 2, or it can be a pretrained index (in this repo, _datastore_1/_ contains the index.)
@@ -88,9 +98,15 @@ It is too small for any improvement to happen. However, if you have enough resou
 
 For the baseline without kNN search, remove the _datastore_path_, _k_, and _lambda_value_. You will get: 
 
-`
-python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt --reference_path $DATA_DIR/val.target --score_path $SAVE_DIR/test_bleu.json --bs $BS --task translation --num_beams $NUM_BEAMS
-`
+```
+python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt \
+    --reference_path $DATA_DIR/val.target \
+    --score_path $SAVE_DIR/test_bleu.json \
+    --bs $BS \
+    --task translation \
+    --num_beams $NUM_BEAMS
+```
+
 
 The baseline result should be:
 {'bleu': 41.3159, 'n_obs': 2000, 'runtime': 143, 'seconds_per_sample': 0.0715}
