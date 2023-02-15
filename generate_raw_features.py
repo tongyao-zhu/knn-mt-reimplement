@@ -1,4 +1,3 @@
-# !/usr/bin/env python
 # coding=utf-8
 # Code adapted from https://github.com/huggingface/transformers/blob/main/examples/pytorch/translation/run_translation_no_trainer.py
 

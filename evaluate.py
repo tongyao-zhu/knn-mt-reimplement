@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # This code is adapted from the code used in https://huggingface.co/facebook/wmt19-de-en
 # it is for english german machine translation
 
