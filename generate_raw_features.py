@@ -1,6 +1,6 @@
-# Code adapted from https://github.com/huggingface/transformers/blob/main/examples/pytorch/translation/run_translation_no_trainer.py
 # !/usr/bin/env python
 # coding=utf-8
+# Code adapted from https://github.com/huggingface/transformers/blob/main/examples/pytorch/translation/run_translation_no_trainer.py
 
 import argparse
 import logging
@@ -225,7 +225,6 @@ def main():
             ].value
             accelerator.init_trackers("translation_no_trainer", experiment_config)
 
-    # Train!
     total_batch_size = args.per_device_batch_size * accelerator.num_processes
 
     logger.info("***** Running feature generation (Inference on training set) *****")
@@ -244,7 +243,7 @@ def main():
         # a function to help with debugging
         print("Tensor {} has shape {}".format(name, tensor.shape))
 
-    # set the model to evaluation mode, as we are only doing inference (one forward pass on the training set)
+    # changed: set the model to evaluation mode, as we are only doing inference (one forward pass on the training set)
     model.eval()
     with torch.no_grad():
         for step, batch in enumerate(train_dataloader):

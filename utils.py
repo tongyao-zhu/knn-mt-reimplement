@@ -1,5 +1,5 @@
 # This file is originally inside: transformers/examples/legacy/seq2seq.
-# Taken from https://github.com/huggingface/transformers/blob/main/examples/legacy/seq2seq/utils.py 
+# Directly copied https://github.com/huggingface/transformers/blob/main/examples/legacy/seq2seq/utils.py
 #
 # Copyright 2020 The HuggingFace Team. All rights reserved.
 #

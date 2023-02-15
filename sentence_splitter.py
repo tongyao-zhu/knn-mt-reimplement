@@ -1,3 +1,6 @@
+# This file is originally inside: transformers/examples/legacy/seq2seq.
+# Directly copied from https://github.com/huggingface/transformers/blob/main/examples/legacy/seq2seq/sentence_splitter.py
+#
 # Copyright 2020 The HuggingFace Team. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
