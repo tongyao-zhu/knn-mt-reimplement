@@ -1,5 +1,6 @@
-# This code is adapted from the code used in https://huggingface.co/facebook/wmt19-de-en
-# it is for english german machine translation
+# This code is adapted from the code used in https://huggingface.co/facebook/wmt19-de-en.
+# Adapted from https://github.com/huggingface/transformers/blob/main/examples/legacy/seq2seq/run_eval.py
+# We only added more generation arguments related to kNN search and some code for datastore initialisation and loading.
 
 import argparse
 import datetime
@@ -41,7 +42,9 @@ def generate_summaries_or_translations(
     prefix=None,
     **generate_kwargs,
 ) -> Dict:
-    """Save model.generate results to <out_file>, and return how long it took."""
+    """
+    Save model.generate results to <out_file>, and return how long it took.
+    """
     fout = Path(out_file).open("w", encoding="utf-8")
     model_name = str(model_name)
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
@@ -52,7 +55,7 @@ def generate_summaries_or_translations(
     logger.info(
         f"Inferred tokenizer type: {tokenizer.__class__}"
     )  # if this is wrong, check config.model_type.
-    if generate_kwargs.get("datastore") is not None:
+    if generate_kwargs.get("datastore") is not None: # newly added for knn search
         generate_kwargs.get("datastore").set_vocab_size(vocab_size=tokenizer.vocab_size)
 
     start_time = time.time()
@@ -196,9 +199,9 @@ def run_generate(verbose=True):
     if args.device == "cpu" and args.fp16:
         # this mix leads to RuntimeError: "threshold_cpu" not implemented for 'Half'
         raise ValueError("Can't mix --fp16 and --device cpu")
-    if args.datastore_path:
-        datastore = DataStore()
-        datastore.load(saved_dir=args.datastore_path)
+    if args.datastore_path: # added datastore path for loading
+        datastore = DataStore() # initiate datastore
+        datastore.load(saved_dir=args.datastore_path) # load from the path storing files for datastore
         logger.info(f"Loaded datastore from {args.datastore_path}")
     else:
         datastore = None
@@ -211,7 +214,7 @@ def run_generate(verbose=True):
         fp16=args.fp16,
         task=args.task,
         prefix=args.prefix,
-        datastore=datastore,
+        datastore=datastore, # added these parameters for KNN search
         k=args.k,
         lambda_value=args.lambda_value,
         **parsed_args,
