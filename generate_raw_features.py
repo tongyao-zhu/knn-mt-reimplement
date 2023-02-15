@@ -14,6 +14,8 @@ from accelerate.logging import get_logger
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
+
+from constants import RAW_FEATURE_KEY_SUFFIX, RAW_FEATURE_VALUE_SUFFIX
 from transformers import (
     CONFIG_MAPPING,
     MODEL_MAPPING,
@@ -37,6 +39,11 @@ MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
 
 
 def main():
+    """
+    This function extracts raw features (hidden states) from the training dataset. It performs a single epoch of
+    inference on the training split. There is no training and the model will be set to evaluation mode.
+    :return: None. The results will be written to the specified path.
+    """
     # Parse the arguments
     args = parse_args()
 
@@ -252,19 +259,29 @@ def main():
             )  # should have 1 embedding layer + 6 transformers layers
             assert batch.decoder_input_ids.size(1) == batch.labels.size(1)
             keys = outputs.decoder_hidden_states[-1].flatten(0, 1)  # [B*T, hidden_size]
-            values = batch.labels.flatten()
+            values = batch.labels.flatten()  # [B*T], 1 dimensional
 
             # remove the values whose next token id is 1, which means padding
             mask = values > 1
             keys = keys[mask]
             values = values[mask]
             assert len(values) == len(keys) == mask.sum()
-            torch.save(keys, os.path.join(args.save_path, f"{step}.pt"))
-            torch.save(values, os.path.join(args.save_path, f"{step}_values.pt"))
+            try:
+                key_path = os.path.join(
+                    args.save_path, str(step) + RAW_FEATURE_KEY_SUFFIX
+                )
+                value_path = os.path.join(
+                    args.save_path, str(step) + RAW_FEATURE_VALUE_SUFFIX
+                )
+                torch.save(keys, key_path)
+                torch.save(values, value_path)
+            except Exception as e:
+                logger.error(f"Fail to save to {args.save_path}.")
+                raise IOError(e)
             progress_bar.update(1)  # one step finished
 
 
-# Parsing input arguments
+# Parsing input arguments. Only the necessary args are kept. Other unused arguments in the original file are deleted.
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Generate raw feature tensors for building the datastore"
