@@ -3,7 +3,9 @@ Repository for the trial task of NUS WING - Reimplementation of kNN-MT using hug
 
 Link to paper: https://arxiv.org/abs/2010.00710
 
-We use the DE-EN translation using Facebook's WMT19 pretrained model as an example. 
+We use the DE-EN translation using Facebook's WMT19 pretrained model as an example. Their original model can be found [here](https://huggingface.co/facebook/wmt19-de-en).
+
+The repo supports [WMT19](https://www.statmt.org/wmt19/translation-task.html) data (Wikimedia Foundation, 2019)  in general. The instructions below only show DE-EN translation, but other pairs should work fine. 
 
 If you want to use a pre-trained index for the datastore and directly run inference, you can directly jump to _[3. Evaluation with datastore](https://github.com/tongyao-zhu/knn-mt-reimplement#3-evaluation-with-datastore)_. 
 
@@ -42,9 +44,14 @@ python generate_raw_features.py   \
     --percentage=1
 ```
 
+The `--dataset_name` and `--dataset_config_name` specify which datasets we should use. 
+
 The `--save_path` specifies where to save the generated features. Please make sure there is enough disk space.
 
 The `--percentage` specifies how many percent of the training data will be loaded and passed through the model. To save time and space for local testing, it is best to use a very small number (e.g. 1) first. 
+
+The file is adapted from the official example code of huggging face [here](https://github.com/huggingface/transformers/blob/main/examples/pytorch/translation/run_translation_no_trainer.py). We removed the 
+evaluation dataset completely and only run a single epoch forward inference on the training set. We delete all unused code related to training (setting up optimizer, etc.). 
 
 ## 2. Construct the datastore index
 Although in the paper the datastore consists of key-value pairs, in reality it is a trained FAISS index (after clustering).
@@ -101,7 +108,7 @@ It is too small for any improvement to happen. However, if you have enough resou
 
 For k==64, lambda_value==0.8, you should get: {'bleu': 40.9568, 'n_obs': 2000, 'runtime': 5892, 'seconds_per_sample': 2.946}
 
-For the baseline without kNN search, remove the _datastore_path_, _k_, and _lambda_value_. You will get: 
+For the [baseline](https://huggingface.co/facebook/wmt19-de-en) without kNN search, remove the _datastore_path_, _k_, and _lambda_value_. You will get: 
 
 ```
 python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_translations.txt \
@@ -111,7 +118,6 @@ python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_tran
     --task translation \
     --num_beams $NUM_BEAMS
 ```
-
 
 The baseline result should be:
 {'bleu': 41.3159, 'n_obs': 2000, 'runtime': 143, 'seconds_per_sample': 0.0715}
