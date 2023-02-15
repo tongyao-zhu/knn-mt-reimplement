@@ -9,7 +9,12 @@ import tqdm
 import numpy as np
 import time
 import logging
-from constants import INDEX_FILE, TOKEN_ID_FILE
+from constants import (
+    INDEX_FILE,
+    TOKEN_ID_FILE,
+    RAW_FEATURE_VALUE_SUFFIX,
+    RAW_FEATURE_KEY_SUFFIX,
+)
 
 np.random.seed(1234)
 
@@ -21,11 +26,13 @@ logging.basicConfig(
     level=logging.INFO,
 )
 
+
 class DataStore:
     """
     This class represents a datastore. It can be trained from raw features, saved and loaded from disk.
     During inference time, it can search given a query and return the normalized score for each token.
     """
+
     def __init__(self):
         """
         Set the necessary attributes. The number follow the original paper.
@@ -53,7 +60,9 @@ class DataStore:
         :param saved_dir: The directory containing the trained index.
         :return: None. The attributes of this Datastore instance will be set.
         """
-        logger.info(f"Started loading trained index and token ids lookup from {saved_dir}")
+        logger.info(
+            f"Started loading trained index and token ids lookup from {saved_dir}"
+        )
         self.index = faiss.read_index(os.path.join(saved_dir, INDEX_FILE))
         self.token_lookup_tensor = torch.tensor(
             torch.load(os.path.join(saved_dir, TOKEN_ID_FILE))
@@ -74,7 +83,9 @@ class DataStore:
         )
         start = time.time()
         self.index.train(key_store[random_indices])
-        logger.info(f"Finished training the index. It took {(time.time() - start)} seconds.")
+        logger.info(
+            f"Finished training the index. It took {(time.time() - start)} seconds."
+        )
         self.index = faiss.index_gpu_to_cpu(self.index)  # put back to CPU
 
     def read_feature_files(self, feature_dir, percentage=100) -> Tuple:
@@ -87,19 +98,31 @@ class DataStore:
         token_id_store: a numpy array of shape (num_keys, 1), each row represents the value (target token) to the key.
         """
         value_files = list(
-            filter(lambda x: x.endswith("values.pt"), os.listdir(feature_dir))
+            filter(
+                lambda x: x.endswith(RAW_FEATURE_VALUE_SUFFIX), os.listdir(feature_dir)
+            )
         )
         value_files = value_files[: int(len(value_files) * (percentage / 100.0))]
         key_store = []
         token_id_store = []
         start_time = time.time()
-        for file_name in tqdm.tqdm(value_files, total=len(value_files), desc = "Loading feature files"):
-            file_id = file_name.split("_values.pt")[0]
-            curr_keys = torch.load(os.path.join(feature_dir, f"{file_id}.pt"))
-            curr_token_ids = torch.load(
-                os.path.join(feature_dir, f"{file_id}_values.pt")
+        for file_name in tqdm.tqdm(
+            value_files, total=len(value_files), desc="Loading feature files"
+        ):
+            file_id = file_name.split(RAW_FEATURE_VALUE_SUFFIX)[0]
+            key_path = os.path.join(feature_dir, str(file_id) + RAW_FEATURE_KEY_SUFFIX)
+            value_path = os.path.join(
+                feature_dir, str(file_id) + RAW_FEATURE_VALUE_SUFFIX
             )
-            key_store += curr_keys.cpu()
+            try:
+                curr_keys = torch.load(key_path)
+                curr_token_ids = torch.load(value_path)
+            except Exception as e:
+                logger.error(f"Failed to load {key_path} or {value_path}.")
+                raise IOError(e)
+            key_store += (
+                curr_keys.cpu()
+            )  # ensure that it is on CPU, as numpy doesn't support GPU
             token_id_store += curr_token_ids.cpu()
         key_store = np.stack(key_store)
         token_id_store = np.stack(token_id_store)
@@ -108,7 +131,9 @@ class DataStore:
         )
         return key_store, token_id_store
 
-    def read_features_and_train(self, feature_dir: str, output_dir:str, percentage:int=100) -> None:
+    def read_features_and_train(
+        self, feature_dir: str, output_dir: str, percentage: int = 100
+    ) -> None:
         """
         Read features and train the index. The result will be saved.
         :param feature_dir: The directory containing the raw features from generate_raw_features.py
@@ -134,7 +159,9 @@ class DataStore:
         logger.info("Start adding keys to the index.")
         start_time = time.time()
         self.index.add(keys_to_add)  # add vectors to the index
-        logger.info(f"Finished adding keys to the index. It took {time.time() - start_time} seconds")
+        logger.info(
+            f"Finished adding keys to the index. It took {time.time() - start_time} seconds"
+        )
 
     def save(self, output_dir: str) -> None:
         """
@@ -151,14 +178,17 @@ class DataStore:
 
         try:
             # save the index for token_ids
-            torch.save(self.token_lookup_tensor, os.path.join(output_dir, TOKEN_ID_FILE))
+            torch.save(
+                self.token_lookup_tensor, os.path.join(output_dir, TOKEN_ID_FILE)
+            )
         except Exception as e:
             logger.error(f"Encountered error when saving torch tensor to {output_dir}")
             raise IOError(e)
         logger.info(
-            f"Successfully saved the trained index ({INDEX_FILE}, and {TOKEN_ID_FILE}) to {output_dir}" )
+            f"Successfully saved the trained index ({INDEX_FILE}, and {TOKEN_ID_FILE}) to {output_dir}"
+        )
 
-    def set_vocab_size(self, vocab_size:int) -> None:
+    def set_vocab_size(self, vocab_size: int) -> None:
         """
         Set the vocabulary size of the datastore. This will be used when generating score tensors for each token.
         :param vocab_size: size of the vocab of the language model.
@@ -181,7 +211,9 @@ class DataStore:
         )  # D, I will have shape (num_queries, k), containing the distance and the index
         actual_token_ids = self.token_lookup_tensor[torch.tensor(I)]  # (num_queries, k)
         scores = torch.zeros((query.shape[0], self.vocab_size))
-        distance_scores = torch.softmax(-torch.tensor(D) / self.T, dim=-1) # softmax of the distance
+        distance_scores = torch.softmax(
+            -torch.tensor(D) / self.T, dim=-1
+        )  # softmax of the distance
         scores = scores.scatter(
             1, actual_token_ids, distance_scores, reduce="add"
         )  # will assign the scores to indices and aggregate for each token
@@ -221,7 +253,9 @@ def read_and_train():
     :return:
     """
     if not (torch.cuda.is_available()):
-        logger.warning("No GPU detected in the environment. Not training on GPU can be very slow")
+        logger.warning(
+            "No GPU detected in the environment. Not training on GPU can be very slow"
+        )
 
     args = parse_args()
     datastore = DataStore()
