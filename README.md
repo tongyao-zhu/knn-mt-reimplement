@@ -27,20 +27,22 @@ pip install -e .
 
 To use the data store that we trained, please download the trained index from [here](https://drive.google.com/file/d/1JuxQGigS4lhz5lEwJA-dEpWfjVAyEzn2/view?usp=share_link). 
 
-After downloading, move it to `./datastore_1/`, so this directory have a `token_ids.pt` and a `index.trained`
+After downloading, move it to `./datastore_trained/` and do `export DATASTORE_DIR=datastore_trained`, so this directory have a `token_ids.pt` and an `index.trained`. You can then directly go to [Step 3](https://github.com/tongyao-zhu/knn-mt-reimplement#3-evaluation-with-datastore).
 
 ## 1. Extract raw features 
 Before building the datastore, we need to extract all features in the form of (hidden_state<sub>i</sub>, word<sub>i+1</sub>). 
 We do so by the following: 
 
 ```
+export FEATURE_DIR=saved_gen
+
 python generate_raw_features.py   \
     --model_name_or_path facebook/wmt19-de-en  \
     --source_lang de   \
     --target_lang en    \
     --dataset_name wmt19  \
     --dataset_config_name de-en  \
-    --save_path saved_gen \
+    --save_path $FEATURE_DIR \
     --percentage=1
 ```
 
@@ -54,15 +56,17 @@ The file is adapted from the official example code of huggging face [here](https
 evaluation dataset completely and only run a single epoch forward inference on the training set. We delete all unused code related to training (setting up optimizer, etc.). 
 
 ## 2. Construct the datastore index
-Although in the paper the datastore consists of key-value pairs, in reality it is a trained FAISS index (after clustering).
+Although in the paper the datastore consists of key-value pairs, in reality it is a trained [FAISS](https://github.com/facebookresearch/faiss) index (after clustering).
 
 This is an essential step. Otherwise, the kNN search becomes infeasible. 
 
 We can train an index by: 
 
 
-`python datastore.py --feature_dir saved_gen --output_dir datastore_1
-`
+```bash
+export DATASTORE_DIR=datastore_trained
+python datastore.py --feature_dir $FEATURE_DIR --output_dir $DATASTORE_DIR
+```
 
 The `--feature_dir` is the stored features generated in Step 1, and the `--output_dir` is the path in which you want your datastore to be saved. 
 
@@ -74,7 +78,7 @@ We modified some part of the library about beam search.
 
 To run the inference and evaluation on the validation dataset, do: 
 
-```
+```bash
 export PAIR=de-en
 export DATA_DIR=data/$PAIR
 export SAVE_DIR=data/$PAIR
@@ -87,12 +91,14 @@ python evaluate.py facebook/wmt19-$PAIR $DATA_DIR/val.source $SAVE_DIR/test_tran
     --bs $BS \
     --task translation \
     --num_beams $NUM_BEAMS \
-    --datastore_path datastore_1 \
+    --datastore_path $DATASTORE_DIR \
     --lambda_value 0.8 \
     --k 64
 ```
 
-The `--datastore_path` parameter should be the datastore path you saved during Step 2, or it can be a pretrained index (in this repo, _datastore_1/_ contains the index.)
+The `evaluate.py` file is adapted from [here](https://github.com/huggingface/transformers/blob/main/examples/legacy/seq2seq/run_eval.py). We only added the following arguments as part of the generation parameters. We also added a data store initialisation and loading step. 
+
+The `--datastore_path` parameter should be the datastore path you saved during Step 2, or it can be a pretrained index (in this repo, _datastore_trained/_ contains the index.)
 
 The `--lambda_value` parameter determines how much you want to interpolate between the generated score (lambda) and the knn_score (1-lambda). 
 
@@ -106,7 +112,7 @@ The final score for each token is:
 Please note that you might not see a big difference between the BLEU scores for different lambda values. This is because we only train the datastore on a very small fraction of the training data (1%), due to computation resources constraint. 
 It is too small for any improvement to happen. However, if you have enough resources, you should be able to see the improvement. 
 
-For k==64, lambda_value==0.8, you should get: {'bleu': 40.9568, 'n_obs': 2000, 'runtime': 5892, 'seconds_per_sample': 2.946}
+For _k_==64, _lambda_value_==0.8, you should get: {'bleu': 40.9568, 'n_obs': 2000, 'runtime': 5892, 'seconds_per_sample': 2.946}
 
 For the [baseline](https://huggingface.co/facebook/wmt19-de-en) without kNN search, remove the _datastore_path_, _k_, and _lambda_value_. You will get: 
 
