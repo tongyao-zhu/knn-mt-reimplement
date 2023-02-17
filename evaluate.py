@@ -55,7 +55,7 @@ def generate_summaries_or_translations(
     logger.info(
         f"Inferred tokenizer type: {tokenizer.__class__}"
     )  # if this is wrong, check config.model_type.
-    if generate_kwargs.get("datastore") is not None: # newly added for knn search
+    if generate_kwargs.get("datastore") is not None:  # newly added for knn search
         generate_kwargs.get("datastore").set_vocab_size(vocab_size=tokenizer.vocab_size)
 
     start_time = time.time()
@@ -199,9 +199,11 @@ def run_generate(verbose=True):
     if args.device == "cpu" and args.fp16:
         # this mix leads to RuntimeError: "threshold_cpu" not implemented for 'Half'
         raise ValueError("Can't mix --fp16 and --device cpu")
-    if args.datastore_path: # added datastore path for loading
-        datastore = DataStore() # initiate datastore
-        datastore.load(saved_dir=args.datastore_path) # load from the path storing files for datastore
+    if args.datastore_path:  # added datastore path for loading
+        datastore = DataStore()  # initiate datastore
+        datastore.load(
+            saved_dir=args.datastore_path
+        )  # load from the path storing files for datastore
         logger.info(f"Loaded datastore from {args.datastore_path}")
     else:
         datastore = None
@@ -214,7 +216,7 @@ def run_generate(verbose=True):
         fp16=args.fp16,
         task=args.task,
         prefix=args.prefix,
-        datastore=datastore, # added these parameters for KNN search
+        datastore=datastore,  # added these parameters for KNN search
         k=args.k,
         lambda_value=args.lambda_value,
         **parsed_args,

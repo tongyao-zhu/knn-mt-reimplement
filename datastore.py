@@ -196,7 +196,7 @@ class DataStore:
         """
         self.vocab_size = vocab_size
 
-    def search_k(self, query: torch.tensor, k: int) -> None:
+    def search_k(self, query: torch.tensor, k: int) -> torch.tensor:
         """
         Search for the top K nearest neighbors, along with the distance.
         :param k: top k
@@ -268,110 +268,3 @@ def read_and_train():
 
 if __name__ == "__main__":
     read_and_train()
-
-    # The following code is for testing purpose. You can ignore it during the actual run time.
-    #
-    # d = 64  # dimension
-    # nb = 100000  # database size
-    # nq = 10000  # nb of queries
-    # np.random.seed(1234)  # make reproducible
-    # xb = np.random.random((nb, d)).astype('float32')
-    # xb[:, 0] += np.arange(nb) / 1000.
-    # xq = np.random.random((nq, d)).astype('float32')
-    # xq[:, 0] += np.arange(nq) / 1000.
-    #
-    # print(xb.shape)
-    # print(xq.shape)
-    # import faiss  # make faiss available
-    #
-    # index = faiss.IndexFlatL2(d)  # build the index
-    # print(index.is_trained)
-    # index.add(xb)  # add vectors to the index
-    # print(index.ntotal)
-    # k = 4  # we want to see 4 nearest neighbors
-    # D, I = index.search(xb[:5], k)  # sanity check
-    # print(I)
-    # print(D)
-    # D, I = index.search(xq, k)  # actual search
-    # print(I[:5])  # neighbors of the 5 first queries
-    # print(I[-5:])  # neighbors of the 5 last queries
-    #
-
-    # a = {1:2, 3:4, 5:6}
-    # for key, value in zip(*a.items()):
-    #     print(key, value)
-    # print("number of GPUs", faiss.get_num_gpu())
-    # if True:
-    #     # if this fails, it means that the GPU version was not comp
-    #     assert faiss.StandardGpuResources, \
-    #         "FAISS was not compiled with GPU support, or loading _swigfaiss_gpu.so failed"
-    #     res = faiss.StandardGpuResources()
-    #     dev_no = 0
-    # print("No problem in initializing gpu")
-
-    # print('Starting to initialise')
-    # datastore = DataStore(config = {"saved_dir": "./saved_gen", "vocab_size":40032})
-    # datastore.read_features_and_train(feature_dir = "./saved_gen", output_dir = "./datastore_1", percentage=1)
-    # print("Finished initialise")
-    # a = torch.tensor([[1,2,3],[0,1,2]])
-    # b = torch.tensor([[0.2,0.4,0.5],[2,4,5]])
-    # c = torch.zeros(2,5)
-    #
-    # print(c[a].shape)
-    # # c[a]=b
-    # print(c)
-    # print(a.shape)
-    # import torch
-    #
-    # input = torch.randn(2, 4)
-    # print(input)
-    # output = torch.zeros(2, 5)
-    # index = torch.tensor([[3, 1, 0, 0], [1, 2, 0, 3]])
-    # output = output.scatter(1, index, input, reduce="add")
-    # print(output)
-    #
-    # a = torch.tensor(torch.arange(10000)) + 1
-    #
-    # print(a.shape)
-    # index = torch.tensor([[3, 1, 0, 0], [1, 2, 0, 3]])
-    # print(a[index].shape)
-    # print(a[index])
-    # T = 10
-    # D = torch.tensor([[3,3,2,1], [3,4,5,1]])
-    # D = D/T
-    # D = torch.softmax(D, dim=-1)
-    # print(D)
-    #
-    # query = torch.randn((7, 1024)).cpu().numpy()
-    # scores = datastore.search_k(query, k=13)
-    # print(scores.shape)
-
-    # import numpy as np
-    #
-    # d = 64  # dimension
-    # nb = 100000  # database size
-    # nq = 10000  # nb of queries
-    # np.random.seed(1234)  # make reproducible
-    # xb = np.random.random((nb, d)).astype('float32')
-    # xb[:, 0] += np.arange(nb) / 1000.
-    # xq = np.random.random((nq, d)).astype('float32')
-    # xq[:, 0] += np.arange(nq) / 1000.
-    #
-    # import faiss
-    #
-    # nlist = 100
-    # m = 8
-    # k = 4
-    # quantizer = faiss.IndexFlatL2(d)  # this remains the same
-    # index = faiss.IndexIVFPQ(quantizer, d, nlist, m, 8)
-    # # 8 specifies that each sub-vector is encoded as 8 bits
-    # print('Starting training')
-    # index.train(xb)
-    # print("End training")
-    # index.add(xb)
-    # D, I = index.search(xb[:5], k)  # sanity check
-    # print(I)
-    # print(D)
-    # index.nprobe = 10  # make comparable with experiment above
-    # D, I = index.search(xq, k)  # search
-    # print(I[-5:])
