@@ -1,6 +1,7 @@
 # This code is adapted from the code used in https://huggingface.co/facebook/wmt19-de-en.
 # Adapted from https://github.com/huggingface/transformers/blob/main/examples/legacy/seq2seq/run_eval.py
 # We only added more generation arguments related to kNN search and some code for datastore initialisation and loading.
+# This code is for evaluating the Seq2seq machine translation model with kNN search.
 
 import argparse
 import datetime

@@ -1,5 +1,6 @@
 # coding=utf-8
 # Code adapted from https://github.com/huggingface/transformers/blob/main/examples/pytorch/translation/run_translation_no_trainer.py
+# This code is for extracting raw features (hidden states) from the training corpus.
 
 import argparse
 import logging

@@ -1,4 +1,5 @@
-# some code is taken from tutorials of the FAISS library. Taken from https://github.com/facebookresearch/faiss
+# Some code in the initializer is taken from tutorials of the FAISS library. Taken from https://github.com/facebookresearch/faiss
+# The code contains the class of a datastore, where the keys are the hidden states and values are target next tokens.
 import argparse
 from typing import Tuple
 
